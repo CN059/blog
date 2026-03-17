@@ -1,27 +1,14 @@
-# 使用官方 bun 镜像
-FROM oven/bun:1 AS base
-WORKDIR /app
+# 使用 nginx 作为静态文件服务器
+FROM docker.io/nginx:alpine
 
-# 安装依赖阶段
-FROM base AS install
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+# 复制构建产物到 nginx 目录
+COPY dist /usr/share/nginx/html
 
-# 构建阶段
-FROM base AS build
-COPY --from=install /app/node_modules ./node_modules
-COPY . .
-RUN bun run build
+# 复制 nginx 配置
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-# 运行阶段
-FROM base AS release
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./
+# 暴露端口
+EXPOSE 80
 
-ENV HOST=0.0.0.0
-ENV PORT=4321
-
-EXPOSE 4321
-
-CMD ["bun", "run", "preview"]
+# 启动 nginx
+CMD ["nginx", "-g", "daemon off;"]
