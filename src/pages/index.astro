@@ -1,17 +1,113 @@
 ---
+/**
+ * 首页 - 文章列表页
+ *
+ * 这是博客的主页面，显示所有文章的列表，按日期降序排列。
+ *
+ * Astro 组件结构：
+ * 1. Frontmatter（---之间的部分）：服务端执行的代码
+ * 2. HTML 模板：页面结构
+ * 3. <style> 标签：作用域样式（只影响当前组件）
+ */
 
+// 从 Astro 内容 API 导入获取集合的方法
+import { getCollection } from 'astro:content';
+
+// 获取 posts 集合中的所有文章
+// getCollection 返回一个 Promise，需要 await
+const posts = await getCollection('posts');
+
+// 按发布日期降序排列文章（最新的在最前面）
+// a.data.date 和 b.data.date 是 Date 对象
+// valueOf() 返回时间戳，用于数值比较
+const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<html lang="en">
+<html lang="zh-CN">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>博客</title>
 	</head>
 	<body>
-		<h1>Astro</h1>
+		<main>
+			<h1>文章</h1>
+			<!-- 文章列表 -->
+			<ul>
+				{/* 遍历排序后的文章，生成列表项 */}
+				{sortedPosts.map((post) => (
+					<li>
+						{/* 链接到 /posts/[文章ID] */}
+						<a href={`/posts/${post.id}`}>
+							<span class="title">{post.data.title}</span>
+							{/* 使用中文格式显示日期 */}
+							<span class="date">{post.data.date.toLocaleDateString('zh-CN')}</span>
+						</a>
+					</li>
+				))}
+			</ul>
+		</main>
 	</body>
 </html>
+
+<style>
+	/* 这里是 Astro 的作用域样式，只会影响当前组件 */
+
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		margin: 0;
+		padding: 2rem;
+		background: #fafafa;
+	}
+
+	main {
+		/* 限制最大宽度，在大屏幕上居中显示 */
+		max-width: 640px;
+		margin: 0 auto;
+	}
+
+	h1 {
+		font-size: 1.5rem;
+		font-weight: 600;
+		margin-bottom: 2rem;
+		color: #333;
+	}
+
+	ul {
+		/* 移除默认列表样式 */
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	li {
+		margin-bottom: 0.5rem;
+	}
+
+	a {
+		/* 使用 flexbox 实现标题和日期的两端对齐 */
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		padding: 0.75rem 0;
+		text-decoration: none;
+		color: inherit;
+		border-bottom: 1px solid #eee; /* 分隔线 */
+	}
+
+	a:hover .title {
+		color: #0066cc; /* 鼠标悬停时标题变蓝 */
+	}
+
+	.title {
+		color: #333;
+	}
+
+	.date {
+		font-size: 0.875rem;
+		color: #999;
+		flex-shrink: 0; /* 防止日期被压缩 */
+		margin-left: 1rem;
+	}
+</style>

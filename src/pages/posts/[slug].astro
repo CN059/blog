@@ -1,0 +1,129 @@
+---
+/**
+ * 文章详情页 - 动态路由页面
+ *
+ * 这是 [slug].astro 文件，方括号表示这是一个动态路由。
+ * 例如：/posts/welcome.md → /posts/welcome
+ *
+ * getStaticPaths() 是 Astro 的特殊函数，用于静态生成时
+ * 为每个动态路径生成对应的 HTML 页面。
+ */
+
+// 从 Astro 内容 API 导入需要的方法
+import { getCollection, render } from 'astro:content';
+
+/**
+ * getStaticPaths - 定义静态路径
+ *
+ * 这个函数告诉 Astro 需要生成哪些页面。
+ * 返回一个数组，每个元素包含：
+ * - params: URL 参数（如 slug）
+ * - props: 传递给组件的属性
+ */
+export async function getStaticPaths() {
+	// 获取 posts 集合中的所有文章
+	const posts = await getCollection('posts');
+
+	// 为每篇文章创建一个路由
+	return posts.map((post) => ({
+		params: { slug: post.id },    // URL 中的 :slug 参数
+		props: { post },              // 传递给组件的 props
+	}));
+}
+
+// 从 Astro.props 获取当前文章数据
+const { post } = Astro.props;
+
+// 渲染文章内容
+// render() 返回 { Content } 组件，用于在页面中显示 Markdown 内容
+const { Content } = await render(post);
+---
+
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		{/* 动态设置页面标题 */}
+		<title>{post.data.title}</title>
+	</head>
+	<body>
+		<main>
+			<a href="/" class="back">← 返回</a>
+			<article>
+				<header>
+					{/* 文章标题 */}
+					<h1>{post.data.title}</h1>
+					{/* 发布日期（中文格式） */}
+					<time>{post.data.date.toLocaleDateString('zh-CN')}</time>
+				</header>
+				{/* 文章正文内容 */}
+				<Content />
+			</article>
+		</main>
+	</body>
+</html>
+
+<style>
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		margin: 0;
+		padding: 2rem;
+		background: #fafafa;
+		line-height: 1.6; /* 行高，提高可读性 */
+	}
+
+	main {
+		max-width: 640px;
+		margin: 0 auto;
+	}
+
+	.back {
+		display: inline-block;
+		margin-bottom: 2rem;
+		color: #666;
+		text-decoration: none;
+	}
+
+	.back:hover {
+		color: #0066cc;
+	}
+
+	article {
+		background: #fff;
+		padding: 2rem;
+		border-radius: 8px;
+	}
+
+	header {
+		margin-bottom: 2rem;
+		padding-bottom: 1rem;
+		border-bottom: 1px solid #eee;
+	}
+
+	h1 {
+		font-size: 1.75rem;
+		font-weight: 600;
+		margin: 0 0 0.5rem 0;
+		color: #333;
+	}
+
+	time {
+		font-size: 0.875rem;
+		color: #999;
+	}
+
+	/* :global() 用于选择子组件中的元素 */
+	/* 因为 <Content /> 渲染的内容不在当前组件的直接控制下 */
+
+	:global(article h2) {
+		font-size: 1.25rem;
+		margin-top: 2rem;
+		margin-bottom: 1rem;
+	}
+
+	:global(article p) {
+		margin: 1rem 0;
+		color: #444;
+	}
+</style>
